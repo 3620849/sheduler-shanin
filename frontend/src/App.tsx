@@ -4,6 +4,7 @@ import { useSchedulings } from './hooks/useSchedulings';
 import { Header } from './components/dashboard/Header';
 import { SchedulingsTable } from './components/dashboard/SchedulingsTable';
 import { SchedulingModal } from './components/modal/SchedulingModal';
+import { ExecutionsDrawer } from './components/dashboard/ExecutionsDrawer';
 import { ToastContainer, ToastMessage } from './components/common/Toast';
 import {
   SchedulingResponse,
@@ -12,7 +13,7 @@ import {
   UpdateSchedulingRequest,
 } from './types/scheduling';
 import { extractErrorMessage } from './api/client';
-import { Clock, CheckCircle2, PauseCircle, AlertTriangle } from 'lucide-react';
+import { Clock, CheckCircle2, PauseCircle, AlertTriangle, FileText } from 'lucide-react';
 
 export function App() {
   const { tasks, loading: tasksLoading, error: tasksError } = useTasks();
@@ -36,6 +37,8 @@ export function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<SchedulingResponse | null>(null);
   const [modalSubmitting, setModalSubmitting] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedScheduleForDrawer, setSelectedScheduleForDrawer] = useState<SchedulingResponse | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = useCallback((type: 'success' | 'error' | 'info', title: string, message?: string) => {
@@ -55,6 +58,16 @@ export function App() {
   const handleOpenEditModal = (schedule: SchedulingResponse) => {
     setEditingSchedule(schedule);
     setIsModalOpen(true);
+  };
+
+  const handleOpenExecutionsDrawer = (schedule: SchedulingResponse | null = null) => {
+    setSelectedScheduleForDrawer(schedule);
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseExecutionsDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedScheduleForDrawer(null);
   };
 
   const handleModalSubmit = async (
@@ -120,6 +133,7 @@ export function App() {
         schedulings={schedulings}
         onOpenCreateModal={handleOpenCreateModal}
         onRefresh={reload}
+        onOpenExecutions={() => handleOpenExecutionsDrawer(null)}
         loading={schedulingsLoading}
       />
 
@@ -180,6 +194,24 @@ export function App() {
               <div className="stat-label">Suspended Jobs</div>
             </div>
           </div>
+
+          <div
+            className="stat-card"
+            style={{ cursor: 'pointer', transition: 'border-color 0.15s ease' }}
+            onClick={() => handleOpenExecutionsDrawer(null)}
+            title="Click to view live execution log stream"
+            data-testid="open-execution-logs"
+          >
+            <div className="stat-icon" style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
+              <FileText size={24} />
+            </div>
+            <div className="stat-info">
+              <div className="stat-value" style={{ fontSize: '1rem', color: '#c084fc', fontWeight: 600 }}>
+                Live Stream →
+              </div>
+              <div className="stat-label">Execution Logs</div>
+            </div>
+          </div>
         </section>
 
         {/* Schedulings Table */}
@@ -187,6 +219,7 @@ export function App() {
           schedulings={schedulings}
           loading={schedulingsLoading || tasksLoading}
           onEdit={handleOpenEditModal}
+          onViewExecutions={handleOpenExecutionsDrawer}
           onToggleStatus={handleToggleStatus}
           onDelete={handleDelete}
           onCreateNew={handleOpenCreateModal}
@@ -207,6 +240,13 @@ export function App() {
         editingSchedule={editingSchedule}
         onSubmit={handleModalSubmit}
         loading={modalSubmitting}
+      />
+
+      {/* Execution Logs Drawer */}
+      <ExecutionsDrawer
+        isOpen={isDrawerOpen}
+        onClose={handleCloseExecutionsDrawer}
+        selectedScheduling={selectedScheduleForDrawer}
       />
 
       {/* Floating Notifications */}

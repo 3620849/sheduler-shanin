@@ -10,6 +10,7 @@ import com.shanin.scheduler.messaging.TaskExecutionMessage;
 import com.shanin.scheduler.model.TaskType;
 import com.shanin.scheduler.quartz.TaskExecutionJob;
 import com.shanin.scheduler.repository.SchedulingRepository;
+import com.shanin.scheduler.repository.TaskExecutionRepository;
 import com.shanin.scheduler.worker.TaskExecutionConsumer;
 import com.shanin.scheduler.worker.TaskExecutionService;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,9 @@ class TaskDispatchAndExecutionTest {
 
     @Mock
     private Trigger trigger;
+
+    @Mock
+    private TaskExecutionRepository taskExecutionRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -130,7 +134,7 @@ class TaskDispatchAndExecutionTest {
     @Test
     @DisplayName("TaskExecutionConsumer delegates message to TaskExecutionService")
     void testConsumerExecutesAllTaskTypes() {
-        TaskExecutionService executionService = new TaskExecutionService();
+        TaskExecutionService executionService = new TaskExecutionService(taskExecutionRepository);
         TaskExecutionConsumer consumer = new TaskExecutionConsumer(executionService);
 
         // Test LOG_TASK

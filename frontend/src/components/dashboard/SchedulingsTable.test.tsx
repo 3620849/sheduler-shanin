@@ -44,6 +44,15 @@ describe('SchedulingsTable', () => {
     expect(onEdit).toHaveBeenCalledWith(mockSchedulings[0]);
   });
 
+  it('calls onViewExecutions when clicking View executions button', () => {
+    const onViewExecutions = vi.fn();
+    render(<SchedulingsTable {...defaultProps} onViewExecutions={onViewExecutions} />);
+    const viewButtons = screen.getAllByTitle('View executions');
+    expect(viewButtons.length).toBe(3);
+    fireEvent.click(viewButtons[0]);
+    expect(onViewExecutions).toHaveBeenCalledWith(mockSchedulings[0]);
+  });
+
   it('calls onToggleStatus when clicking Pause / Resume button', async () => {
     const onToggleStatus = vi.fn().mockResolvedValue(undefined);
     render(<SchedulingsTable {...defaultProps} onToggleStatus={onToggleStatus} />);

@@ -269,6 +269,18 @@ button, input, select, textarea {
   background-color: #94a3b8;
 }
 
+.badge-success {
+  background-color: var(--success-light);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.badge-failed {
+  background-color: var(--danger-light);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
 .badge-task {
   background-color: rgba(139, 92, 246, 0.15);
   color: #c4b5fd;
@@ -855,4 +867,54 @@ button, input, select, textarea {
 .pagination-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Drawer & Execution Stream */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.drawer-right {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 560px;
+  max-width: 90vw;
+  background-color: var(--surface-color);
+  border-left: 1px solid var(--border-color);
+  z-index: 60;
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.5);
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pulse-green {
+  background-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.pulse-yellow {
+  background-color: var(--warning);
+  box-shadow: 0 0 8px var(--warning);
 }

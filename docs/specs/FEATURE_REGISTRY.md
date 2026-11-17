@@ -12,7 +12,9 @@ This registry tracks all technical and functional specifications adhering to the
 | **003** | [Frontend Scheduling Dashboard](003-frontend-scheduling-dashboard.md) | `Implemented` | `docs/specs/003-frontend-scheduling-dashboard.md` | `000`, `001` | Stage 3 implementation: React (Vite + TypeScript) dashboard with schedulings table, dynamic parameter forms from backend task schema, timing selector, pause/resume/edit/delete actions, and API client. |
 | **004** | [Containerization & Orchestration](004-containerization-orchestration.md) | `Implemented` | `docs/specs/004-containerization-orchestration.md` | `000`, `001`, `002`, `003` | Stage 4 implementation: Multi-stage Dockerfiles (`backend/Dockerfile`, `frontend/Dockerfile`), Nginx reverse proxy, and root orchestration via `docker-compose.yml`. |
 | **005** | [Frontend Testing Suite](005-frontend-testing-suite.md) | `Implemented` | `docs/specs/005-frontend-testing-suite.md` | `000`, `003` | Stage 5 implementation: Vitest, React Testing Library, and jest-dom test suite for table views, dynamic forms, timing selectors, modals, and API client. |
+| **006** | [Delivery Documentation & README](006-delivery-documentation-readme.md) | `Implemented` | `docs/specs/006-delivery-documentation-readme.md` | `000`, `001`, `002`, `003`, `004`, `005` | Stage 6 implementation: Root README.md detailing system architecture, startup instructions, design decisions, assumptions, and test verification. |
 | **006** | [Schedulings Pagination & Data Navigation](006-schedulings-pagination.md) | `Implemented` | `docs/specs/006-schedulings-pagination.md` | `000`, `001`, `003`, `005` | Stage 6 implementation: Server-side pagination on `GET /api/schedulings` with `PageResponse<T>`, frontend pagination controls, table integration, and full test suite. |
+| **007** | [Quartz Execution History Tracking & Live Log Stream](007-execution-history-tracking.md) | `Implemented` | `docs/specs/007-execution-history-tracking.md` | `000`, `001`, `002`, `003`, `005` | Stage 7 implementation: Persistence of task executions from worker nodes, REST API `/api/executions`, frontend slide-out executions drawer with live polling stream, table row action, and test suite. |
 
 ---
 
@@ -108,6 +110,16 @@ This registry tracks all technical and functional specifications adhering to the
   - Vitest + React Testing Library + jest-dom + jsdom setup.
   - Test suites for API error extraction, badge components, schedulings table, dynamic parameter forms, timing selectors, and scheduling CRUD modals.
   - Verification via `npm run test` and `npm run build`.
+
+---
+
+### 006: Delivery Documentation & README
+- **Spec File:** [`docs/specs/006-delivery-documentation-readme.md`](006-delivery-documentation-readme.md)
+- **Status:** Implemented
+- **Scope:**
+  - Root `README.md` satisfying all Requirement 7 delivery criteria.
+  - Architecture overview, Docker Compose startup, local development instructions, design decisions, assumptions, and testing instructions.
+
 
 ---
 

@@ -13,12 +13,14 @@ import {
   Plus,
   Clock,
   Layers,
+  FileText,
 } from 'lucide-react';
 
 interface SchedulingsTableProps {
   schedulings: SchedulingResponse[];
   loading: boolean;
   onEdit: (schedule: SchedulingResponse) => void;
+  onViewExecutions?: (schedule: SchedulingResponse) => void;
   onToggleStatus: (id: string, currentStatus: ScheduleStatus) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCreateNew: () => void;
@@ -34,6 +36,7 @@ export const SchedulingsTable: React.FC<SchedulingsTableProps> = ({
   schedulings,
   loading,
   onEdit,
+  onViewExecutions,
   onToggleStatus,
   onDelete,
   onCreateNew,
@@ -231,6 +234,20 @@ export const SchedulingsTable: React.FC<SchedulingsTableProps> = ({
                             title={s.status === 'ACTIVE' ? 'Pause scheduling' : 'Resume scheduling'}
                           >
                             {s.status === 'ACTIVE' ? <Pause size={15} /> : <Play size={15} />}
+                          </button>
+                        )}
+
+                        {/* View executions button */}
+                        {onViewExecutions && (
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            onClick={() => onViewExecutions(s)}
+                            disabled={isItemLoading}
+                            title="View executions"
+                            data-testid={`view-executions-${s.id}`}
+                          >
+                            <FileText size={15} color="var(--primary)" />
                           </button>
                         )}
 
