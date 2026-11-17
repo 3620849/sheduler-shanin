@@ -7,6 +7,7 @@ import com.shanin.scheduler.dto.UpdateSchedulingRequest;
 import com.shanin.scheduler.service.SchedulingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/schedulings")
+@ConditionalOnProperty(name = "SCHEDULER_ENABLED", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class SchedulingController {
 

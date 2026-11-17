@@ -47,6 +47,7 @@ public class QuartzTriggerBuilder {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("schedulingId", scheduling.getId().toString());
         jobDataMap.put("taskType", scheduling.getTaskType().name());
+        jobDataMap.put("taskName", scheduling.getName());
 
         try {
             String paramsJson = objectMapper.writeValueAsString(scheduling.getTaskParameters());

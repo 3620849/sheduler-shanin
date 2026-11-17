@@ -9,6 +9,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -16,6 +17,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "SCHEDULER_ENABLED", havingValue = "true", matchIfMissing = true)
 public class QuartzSchedulerService {
 
     private static final Logger log = LoggerFactory.getLogger(QuartzSchedulerService.class);

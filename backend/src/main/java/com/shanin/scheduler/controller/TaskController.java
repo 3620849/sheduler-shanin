@@ -5,6 +5,7 @@ import com.shanin.scheduler.dto.TaskDefinitionResponse;
 import com.shanin.scheduler.model.TaskType;
 import com.shanin.scheduler.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
+@ConditionalOnProperty(name = "SCHEDULER_ENABLED", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class TaskController {
 

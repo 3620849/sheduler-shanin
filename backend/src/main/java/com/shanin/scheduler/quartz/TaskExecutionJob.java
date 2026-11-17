@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shanin.scheduler.entity.ScheduleStatus;
 import com.shanin.scheduler.entity.Scheduling;
+import com.shanin.scheduler.messaging.TaskExecutionDispatcher;
+import com.shanin.scheduler.messaging.TaskExecutionMessage;
 import com.shanin.scheduler.model.TaskType;
 import com.shanin.scheduler.repository.SchedulingRepository;
 import org.quartz.Job;
@@ -29,11 +31,16 @@ public class TaskExecutionJob implements Job {
 
     private final SchedulingRepository schedulingRepository;
     private final ObjectMapper objectMapper;
+    private final Optional<TaskExecutionDispatcher> taskExecutionDispatcher;
 
     @Autowired
-    public TaskExecutionJob(SchedulingRepository schedulingRepository, ObjectMapper objectMapper) {
+    public TaskExecutionJob(
+            SchedulingRepository schedulingRepository,
+            ObjectMapper objectMapper,
+            Optional<TaskExecutionDispatcher> taskExecutionDispatcher) {
         this.schedulingRepository = schedulingRepository;
         this.objectMapper = objectMapper;
+        this.taskExecutionDispatcher = taskExecutionDispatcher;
     }
 
     @Override
@@ -41,9 +48,10 @@ public class TaskExecutionJob implements Job {
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         String schedulingIdStr = jobDataMap.getString("schedulingId");
         String taskTypeStr = jobDataMap.getString("taskType");
+        String taskName = jobDataMap.getString("taskName");
         String taskParametersJson = jobDataMap.getString("taskParametersJson");
 
-        log.info("Executing scheduled task: id={}, type={}", schedulingIdStr, taskTypeStr);
+        log.info("Quartz trigger fired for scheduling: id={}, type={}", schedulingIdStr, taskTypeStr);
 
         Map<String, Object> parameters = Map.of();
         if (taskParametersJson != null && !taskParametersJson.isBlank()) {
@@ -55,13 +63,33 @@ public class TaskExecutionJob implements Job {
         }
 
         TaskType taskType = TaskType.valueOf(taskTypeStr);
-        executeSimulatedAction(taskType, parameters);
+        UUID schedulingId = schedulingIdStr != null ? UUID.fromString(schedulingIdStr) : null;
+        if (taskName == null || taskName.isBlank()) {
+            taskName = "Task-" + taskTypeStr;
+        }
+
+        Instant scheduledFireTime = context.getScheduledFireTime() != null
+            ? context.getScheduledFireTime().toInstant()
+            : Instant.now();
+
+        TaskExecutionMessage message = TaskExecutionMessage.create(
+            schedulingId,
+            taskName,
+            taskType,
+            parameters,
+            scheduledFireTime
+        );
+
+        if (taskExecutionDispatcher.isPresent()) {
+            taskExecutionDispatcher.get().dispatch(message);
+        } else {
+            log.warn("TaskExecutionDispatcher not available; message not dispatched for scheduling id={}", schedulingIdStr);
+        }
 
         // Update Scheduling entity status and nextRunAt
-        if (schedulingIdStr != null) {
+        if (schedulingId != null) {
             try {
-                UUID id = UUID.fromString(schedulingIdStr);
-                Optional<Scheduling> schedulingOpt = schedulingRepository.findById(id);
+                Optional<Scheduling> schedulingOpt = schedulingRepository.findById(schedulingId);
                 if (schedulingOpt.isPresent()) {
                     Scheduling scheduling = schedulingOpt.get();
                     Trigger trigger = context.getTrigger();
@@ -72,33 +100,12 @@ public class TaskExecutionJob implements Job {
                     } else {
                         scheduling.setNextRunAt(null);
                         scheduling.setStatus(ScheduleStatus.COMPLETED);
-                        log.info("Scheduling id={} has no further triggers; marked as COMPLETED", id);
+                        log.info("Scheduling id={} has no further triggers; marked as COMPLETED", schedulingId);
                     }
                     schedulingRepository.save(scheduling);
                 }
             } catch (Exception e) {
                 log.error("Failed to update scheduling record status for id {}: {}", schedulingIdStr, e.getMessage(), e);
-            }
-        }
-    }
-
-    private void executeSimulatedAction(TaskType taskType, Map<String, Object> parameters) {
-        switch (taskType) {
-            case LOG_TASK -> {
-                String message = (String) parameters.getOrDefault("message", "");
-                log.info("[LOG_TASK] Executed: {}", message);
-            }
-            case EMAIL_TASK -> {
-                String to = (String) parameters.getOrDefault("to", "unknown@domain.com");
-                String subject = (String) parameters.getOrDefault("subject", "No Subject");
-                String body = (String) parameters.getOrDefault("body", "");
-                log.info("[EMAIL_TASK] Simulated email dispatch to: <{}>, subject: '{}', body length: {}",
-                    to, subject, body != null ? body.length() : 0);
-            }
-            case DB_QUERY_TASK -> {
-                String query = (String) parameters.getOrDefault("query", "SELECT 1");
-                Object timeoutObj = parameters.getOrDefault("timeoutSeconds", 30);
-                log.info("[DB_QUERY_TASK] Simulated query execution: '{}', timeout: {}s", query, timeoutObj);
             }
         }
     }
