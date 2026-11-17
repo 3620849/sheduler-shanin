@@ -1,0 +1,85 @@
+import { TaskDefinitionResponse } from '../../types/task';
+
+export const mockTasks: TaskDefinitionResponse[] = [
+  {
+    taskType: 'LOG_TASK',
+    displayName: 'Log Execution Task',
+    description: 'Logs a formatted message to the system log stream',
+    parameters: [
+      {
+        name: 'message',
+        type: 'STRING',
+        required: true,
+        description: 'Message content to log',
+        defaultValue: null,
+        format: null,
+        min: null,
+        max: null,
+      },
+    ],
+  },
+  {
+    taskType: 'EMAIL_TASK',
+    displayName: 'Email Dispatch Task',
+    description: 'Simulates sending an email notification to a recipient',
+    parameters: [
+      {
+        name: 'to',
+        type: 'STRING',
+        required: true,
+        description: 'Recipient email address',
+        defaultValue: null,
+        format: 'email',
+        min: null,
+        max: null,
+      },
+      {
+        name: 'subject',
+        type: 'STRING',
+        required: true,
+        description: 'Subject line of the email',
+        defaultValue: null,
+        format: null,
+        min: null,
+        max: null,
+      },
+      {
+        name: 'body',
+        type: 'STRING',
+        required: false,
+        description: 'Body content of the email',
+        defaultValue: null,
+        format: null,
+        min: null,
+        max: null,
+      },
+    ],
+  },
+  {
+    taskType: 'DB_QUERY_TASK',
+    displayName: 'Database Query Task',
+    description: 'Simulates executing a diagnostic database query',
+    parameters: [
+      {
+        name: 'query',
+        type: 'STRING',
+        required: true,
+        description: 'SQL query string to simulate',
+        defaultValue: null,
+        format: null,
+        min: null,
+        max: null,
+      },
+      {
+        name: 'timeoutSeconds',
+        type: 'NUMBER',
+        required: false,
+        description: 'Query timeout in seconds',
+        defaultValue: 30.0,
+        format: null,
+        min: 1.0,
+        max: 300.0,
+      },
+    ],
+  },
+];
