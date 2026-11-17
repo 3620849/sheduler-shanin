@@ -107,6 +107,19 @@ frontend/
   - Red toast for API failure with parsed backend error messages.
 - Clean responsive layout compatible with mobile and desktop viewports.
 
+### 4.5. Dark Theme Global & Container Scrollbar Styling
+- Explicitly declare `color-scheme: dark;` on `:root` and `html` to instruct browser rendering engines (Chromium, Gecko, WebKit) to use dark-themed system native scrollbars and controls.
+- Enforce cross-browser dark scrollbars via standard CSS properties:
+  - `scrollbar-width: thin;`
+  - `scrollbar-color: var(--surface-hover) transparent;`
+- Provide custom WebKit/Blink scrollbar overrides (`::-webkit-scrollbar`):
+  - Width and height: `8px`.
+  - Track background: `transparent` (ensuring seamless integration against both `--bg-color` `#0f172a` and elevated surfaces like `--surface-color` `#1e293b`).
+  - Thumb background: `var(--surface-hover)` (`#334155`) with rounded corners (`var(--radius-sm)`).
+  - Thumb hover state: `var(--text-muted)` (`#64748b`).
+  - Corner background: `transparent`.
+- Targets: Applied globally to `*`, `html`, `body`, modal bodies (`.modal-body`), drawers, and horizontally scrollable tables (`.table-responsive`).
+
 ## 5. Verification & Quality Gates
 - `npm run build` succeeds with zero TypeScript (`tsc`) and bundling errors.
 - Verification that all API payloads conform exactly to backend controller DTOs.

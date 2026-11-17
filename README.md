@@ -249,6 +249,33 @@ cd frontend
 npm test
 ```
 
+### Running End-to-End (E2E) Tests with Playwright & Docker Test Environment
+The end-to-end test suite uses **Playwright** running against an isolated containerized test environment (`docker-compose.test.yml`) with dedicated non-colliding ports and a separate MySQL test database (`scheduler_test_db`).
+
+The E2E suites cover:
+* **Dashboard View (`01-dashboard-view.spec.ts`):** Page load, branding, metric counters.
+* **Dynamic Creation (`02-create-scheduling.spec.ts`):** `LOG_TASK`, `EMAIL_TASK`, dynamic schema parameter validation, interval and cron timing.
+* **Lifecycle Actions (`03-schedule-lifecycle.spec.ts`):** Pause, Resume, Edit parameter update, Delete with modal confirmation.
+* **Concurrent Isolation (`04-concurrent-suspension.spec.ts`):** Verifies that suspending one schedule halts its own execution while other active schedules continue executing and logging executions unimpeded.
+* **Execution History Drawer (`05-execution-history.spec.ts`):** Slide-out execution drawer, live polling stream, log inspection.
+* **Pagination (`06-pagination.spec.ts`):** Server-side page navigation, row size selection.
+
+To run E2E tests:
+```bash
+# 1. Start the isolated test environment
+docker compose -f docker-compose.test.yml up -d --wait --build
+
+# 2. Run Playwright E2E tests (from frontend directory)
+cd frontend
+npm run test:e2e
+
+# Or run with interactive UI:
+npm run test:e2e:ui
+
+# 3. Teardown test environment and test database volume
+docker compose -f docker-compose.test.yml down -v
+```
+
 To run the production bundle check:
 ```bash
 cd frontend
