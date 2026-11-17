@@ -1,0 +1,136 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: scheduler-mysql
+    environment:
+      MYSQL_DATABASE: scheduler_db
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appsecret
+      MYSQL_ROOT_PASSWORD: rootsecret
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - scheduler-network
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: scheduler-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - scheduler-network
+
+  backend-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: scheduler-backend:latest
+    container_name: scheduler-backend-api
+    ports:
+      - "8080:8080"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: scheduler_db
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appsecret
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/scheduler_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: appsecret
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SCHEDULER_ENABLED: "true"
+      WORKER_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - scheduler-network
+
+  backend-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: scheduler-backend:latest
+    container_name: scheduler-backend-worker
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: scheduler_db
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appsecret
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/scheduler_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: appsecret
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SCHEDULER_ENABLED: "false"
+      WORKER_ENABLED: "true"
+      SPRING_QUARTZ_AUTO_STARTUP: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - scheduler-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: scheduler-frontend:latest
+    container_name: scheduler-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-api
+    restart: unless-stopped
+    networks:
+      - scheduler-network
+
+networks:
+  scheduler-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  rabbitmq-data:
+    driver: local

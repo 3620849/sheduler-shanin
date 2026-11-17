@@ -10,6 +10,7 @@ This registry tracks all technical and functional specifications adhering to the
 | **001** | [Core Backend Service & Quartz Scheduling Engine](001-backend-core-scheduling.md) | `Implemented` | `docs/specs/001-backend-core-scheduling.md` | `000` | Stage 1 implementation: Spring Boot 4.1.2 setup, Predefined task schema engine, Scheduling entity, Quartz JDBC JobStore & triggers, and CRUD REST APIs. |
 | **002** | [Asynchronous Execution Topology & Role Separation via RabbitMQ](002-rabbitmq-role-separation.md) | `Implemented` | `docs/specs/002-rabbitmq-role-separation.md` | `000`, `001` | Stage 2 implementation: RabbitMQ messaging infrastructure, role toggles (SCHEDULER_ENABLED, WORKER_ENABLED), async task dispatch flow, multi-stage Dockerfile, and role-activation integration tests. |
 | **003** | [Frontend Scheduling Dashboard](003-frontend-scheduling-dashboard.md) | `Implemented` | `docs/specs/003-frontend-scheduling-dashboard.md` | `000`, `001` | Stage 3 implementation: React (Vite + TypeScript) dashboard with schedulings table, dynamic parameter forms from backend task schema, timing selector, pause/resume/edit/delete actions, and API client. |
+| **004** | [Containerization & Orchestration](004-containerization-orchestration.md) | `Implemented` | `docs/specs/004-containerization-orchestration.md` | `000`, `001`, `002`, `003` | Stage 4 implementation: Multi-stage Dockerfiles (`backend/Dockerfile`, `frontend/Dockerfile`), Nginx reverse proxy, and root orchestration via `docker-compose.yml`. |
 
 ---
 
@@ -82,4 +83,18 @@ This registry tracks all technical and functional specifications adhering to the
     - Step 3: Schedule timing selector (One-Time datetime picker, Interval duration + unit, Weekly days of week + time, Cron expression input with presets & guidance).
   - Client-side validation, error banners/toast notifications, and responsive modern layout.
   - Verification via clean `npm run build` bundle compilation.
+
+---
+
+### 004: Containerization & Orchestration
+- **Spec File:** [`docs/specs/004-containerization-orchestration.md`](004-containerization-orchestration.md)
+- **Status:** Implemented
+- **Scope:**
+  - Multi-stage `frontend/Dockerfile` (`node:22-alpine` builder, `nginx:alpine` runtime).
+  - Frontend `.dockerignore`.
+  - Nginx configuration (`docker/nginx/nginx.conf`) with SPA routing and `/api/` reverse proxy to `http://backend-api:8080/api/`.
+  - Multi-stage `backend/Dockerfile` (`eclipse-temurin:25-jdk-alpine` builder, `eclipse-temurin:25-jre-alpine` runtime) and `.dockerignore`.
+  - Root `docker-compose.yml` orchestrating 5 services (`mysql`, `rabbitmq`, `backend-api`, `backend-worker`, `frontend`), networks, and persistent volumes.
+  - Integration validation via clean `docker compose config` and container build readiness.
+
 

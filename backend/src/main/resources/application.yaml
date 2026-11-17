@@ -36,6 +36,7 @@ spring:
 
   quartz:
     job-store-type: jdbc
+    auto-startup: ${SCHEDULER_ENABLED:true}
     jdbc:
       initialize-schema: always
     properties:
