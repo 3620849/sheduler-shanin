@@ -9,6 +9,7 @@ This registry tracks all technical and functional specifications adhering to the
 | **000** | [Distributed Task Scheduling Platform Architecture](000-system-architecture.md) | `Approved` | `docs/specs/000-system-architecture.md` | *None (Baseline)* | System topology, Quartz clustering, predefined tasks (`LOG_TASK`, `EMAIL_TASK`, `DB_QUERY_TASK`), REST APIs, RabbitMQ dispatch, and multi-stage delivery roadmap. |
 | **001** | [Core Backend Service & Quartz Scheduling Engine](001-backend-core-scheduling.md) | `Implemented` | `docs/specs/001-backend-core-scheduling.md` | `000` | Stage 1 implementation: Spring Boot 4.1.2 setup, Predefined task schema engine, Scheduling entity, Quartz JDBC JobStore & triggers, and CRUD REST APIs. |
 | **002** | [Asynchronous Execution Topology & Role Separation via RabbitMQ](002-rabbitmq-role-separation.md) | `Implemented` | `docs/specs/002-rabbitmq-role-separation.md` | `000`, `001` | Stage 2 implementation: RabbitMQ messaging infrastructure, role toggles (SCHEDULER_ENABLED, WORKER_ENABLED), async task dispatch flow, multi-stage Dockerfile, and role-activation integration tests. |
+| **003** | [Frontend Scheduling Dashboard](003-frontend-scheduling-dashboard.md) | `Implemented` | `docs/specs/003-frontend-scheduling-dashboard.md` | `000`, `001` | Stage 3 implementation: React (Vite + TypeScript) dashboard with schedulings table, dynamic parameter forms from backend task schema, timing selector, pause/resume/edit/delete actions, and API client. |
 
 ---
 
@@ -65,4 +66,20 @@ This registry tracks all technical and functional specifications adhering to the
   - Asynchronous task dispatch flow from Quartz trigger on scheduler node to RabbitMQ, and consumption & execution on worker node.
   - Multi-stage `Dockerfile` (`eclipse-temurin:25-jdk-alpine` builder, `eclipse-temurin:25-jre-alpine` runtime with non-root user and container JVM flags) and `.dockerignore`.
   - Integration testing suite verifying role-based activation and message dispatch flow.
+
+---
+
+### 003: Frontend Scheduling Dashboard
+- **Spec File:** [`docs/specs/003-frontend-scheduling-dashboard.md`](003-frontend-scheduling-dashboard.md)
+- **Status:** Implemented
+- **Scope:**
+  - React + Vite + TypeScript single-page application under `frontend/`.
+  - Type-safe API client and hooks for `/api/tasks` and `/api/schedulings`.
+  - Schedulings data table with real-time status badges, next run timestamps, and action handlers (Pause/Resume, Edit, Delete with modal confirmation).
+  - Create & Edit Scheduling modal featuring:
+    - Step 1: General Info (name and optional description).
+    - Step 2: Predefined task selector with dynamic schema form generating inputs based on `ParameterDefinition` (text, email, number with validation).
+    - Step 3: Schedule timing selector (One-Time datetime picker, Interval duration + unit, Weekly days of week + time, Cron expression input with presets & guidance).
+  - Client-side validation, error banners/toast notifications, and responsive modern layout.
+  - Verification via clean `npm run build` bundle compilation.
 
