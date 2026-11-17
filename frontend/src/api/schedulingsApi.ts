@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { ApiResponse } from '../types/api';
+import { ApiResponse, PageResponse } from '../types/api';
 import {
   SchedulingResponse,
   CreateSchedulingRequest,
@@ -7,8 +7,10 @@ import {
 } from '../types/scheduling';
 
 export const schedulingsApi = {
-  async getAll(): Promise<SchedulingResponse[]> {
-    const response = await apiClient.get<ApiResponse<SchedulingResponse[]>>('/schedulings');
+  async getAll(page: number = 0, size: number = 10): Promise<PageResponse<SchedulingResponse>> {
+    const response = await apiClient.get<ApiResponse<PageResponse<SchedulingResponse>>>('/schedulings', {
+      params: { page, size, sort: 'createdAt,desc' },
+    });
     return response.data.data;
   },
 

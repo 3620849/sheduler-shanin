@@ -2,12 +2,16 @@ package com.shanin.scheduler.controller;
 
 import com.shanin.scheduler.dto.ApiResponse;
 import com.shanin.scheduler.dto.CreateSchedulingRequest;
+import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
 import com.shanin.scheduler.dto.UpdateSchedulingRequest;
 import com.shanin.scheduler.service.SchedulingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,9 +34,10 @@ public class SchedulingController {
     private final SchedulingService schedulingService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SchedulingResponse>>> getAllSchedulings() {
-        List<SchedulingResponse> list = schedulingService.getAllSchedulings();
-        return ResponseEntity.ok(ApiResponse.ok(list));
+    public ResponseEntity<ApiResponse<PageResponse<SchedulingResponse>>> getSchedulings(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PageResponse<SchedulingResponse> page = schedulingService.getSchedulings(pageable);
+        return ResponseEntity.ok(ApiResponse.ok(page));
     }
 
     @GetMapping("/{id}")

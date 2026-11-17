@@ -71,4 +71,31 @@ describe('SchedulingsTable', () => {
       expect(onDelete).toHaveBeenCalledWith(mockSchedulings[0].id);
     });
   });
+
+  it('renders pagination menu and handles page & size changes when pagination props are supplied', () => {
+    const onPageChange = vi.fn();
+    const onPageSizeChange = vi.fn();
+    render(
+      <SchedulingsTable
+        {...defaultProps}
+        page={0}
+        pageSize={10}
+        totalElements={25}
+        totalPages={3}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
+    );
+
+    expect(screen.getByTestId('pagination-menu')).toBeInTheDocument();
+    expect(screen.getByText(/Total:/i)).toHaveTextContent('Total: 25 jobs');
+
+    const nextBtn = screen.getByRole('button', { name: 'Next page' });
+    fireEvent.click(nextBtn);
+    expect(onPageChange).toHaveBeenCalledWith(1);
+
+    const sizeSelect = screen.getByRole('combobox', { name: 'Rows per page' });
+    fireEvent.change(sizeSelect, { target: { value: '20' } });
+    expect(onPageSizeChange).toHaveBeenCalledWith(20);
+  });
 });

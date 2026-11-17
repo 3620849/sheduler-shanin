@@ -20,6 +20,12 @@ export function App() {
     schedulings,
     loading: schedulingsLoading,
     error: schedulingsError,
+    page,
+    pageSize,
+    totalElements,
+    totalPages,
+    setPage,
+    setPageSize,
     reload,
     createScheduling,
     updateScheduling,
@@ -104,7 +110,7 @@ export function App() {
   };
 
   // Stats
-  const totalCount = schedulings.length;
+  const totalCount = totalElements;
   const activeCount = schedulings.filter((s) => s.status === 'ACTIVE').length;
   const pausedCount = schedulings.filter((s) => s.status === 'PAUSED').length;
 
@@ -184,6 +190,12 @@ export function App() {
           onToggleStatus={handleToggleStatus}
           onDelete={handleDelete}
           onCreateNew={handleOpenCreateModal}
+          page={page}
+          pageSize={pageSize}
+          totalElements={totalElements}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
         />
       </main>
 

@@ -2,6 +2,7 @@ package com.shanin.scheduler.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shanin.scheduler.dto.CreateSchedulingRequest;
+import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
 import com.shanin.scheduler.entity.ScheduleStatus;
 import com.shanin.scheduler.entity.ScheduleType;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -41,8 +43,8 @@ class SchedulingControllerTest {
     private SchedulingService schedulingService;
 
     @Test
-    @DisplayName("GET /api/schedulings returns list of schedulings")
-    void getAllSchedulings() throws Exception {
+    @DisplayName("GET /api/schedulings returns paginated schedulings")
+    void getSchedulingsPaginated() throws Exception {
         UUID id = UUID.randomUUID();
         SchedulingResponse response = new SchedulingResponse(
             id, "Heartbeat Check", TaskType.LOG_TASK, Map.of("message", "alive"),
@@ -50,14 +52,22 @@ class SchedulingControllerTest {
             ScheduleStatus.ACTIVE, Instant.now().plusSeconds(30),
             Instant.now(), Instant.now()
         );
+        PageResponse<SchedulingResponse> pageResponse = new PageResponse<>(
+            List.of(response), 0, 10, 1L, 1, true
+        );
 
-        when(schedulingService.getAllSchedulings()).thenReturn(List.of(response));
+        when(schedulingService.getSchedulings(any(Pageable.class))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/api/schedulings").contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/schedulings?page=0&size=10").contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data[0].id").value(id.toString()))
-            .andExpect(jsonPath("$.data[0].name").value("Heartbeat Check"));
+            .andExpect(jsonPath("$.data.content[0].id").value(id.toString()))
+            .andExpect(jsonPath("$.data.content[0].name").value("Heartbeat Check"))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(10))
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.totalPages").value(1))
+            .andExpect(jsonPath("$.data.last").value(true));
     }
 
     @Test

@@ -12,6 +12,7 @@ This registry tracks all technical and functional specifications adhering to the
 | **003** | [Frontend Scheduling Dashboard](003-frontend-scheduling-dashboard.md) | `Implemented` | `docs/specs/003-frontend-scheduling-dashboard.md` | `000`, `001` | Stage 3 implementation: React (Vite + TypeScript) dashboard with schedulings table, dynamic parameter forms from backend task schema, timing selector, pause/resume/edit/delete actions, and API client. |
 | **004** | [Containerization & Orchestration](004-containerization-orchestration.md) | `Implemented` | `docs/specs/004-containerization-orchestration.md` | `000`, `001`, `002`, `003` | Stage 4 implementation: Multi-stage Dockerfiles (`backend/Dockerfile`, `frontend/Dockerfile`), Nginx reverse proxy, and root orchestration via `docker-compose.yml`. |
 | **005** | [Frontend Testing Suite](005-frontend-testing-suite.md) | `Implemented` | `docs/specs/005-frontend-testing-suite.md` | `000`, `003` | Stage 5 implementation: Vitest, React Testing Library, and jest-dom test suite for table views, dynamic forms, timing selectors, modals, and API client. |
+| **006** | [Schedulings Pagination & Data Navigation](006-schedulings-pagination.md) | `Implemented` | `docs/specs/006-schedulings-pagination.md` | `000`, `001`, `003`, `005` | Stage 6 implementation: Server-side pagination on `GET /api/schedulings` with `PageResponse<T>`, frontend pagination controls, table integration, and full test suite. |
 
 ---
 
@@ -107,6 +108,20 @@ This registry tracks all technical and functional specifications adhering to the
   - Vitest + React Testing Library + jest-dom + jsdom setup.
   - Test suites for API error extraction, badge components, schedulings table, dynamic parameter forms, timing selectors, and scheduling CRUD modals.
   - Verification via `npm run test` and `npm run build`.
+
+---
+
+### 006: Schedulings Pagination & Data Navigation
+- **Spec File:** [`docs/specs/006-schedulings-pagination.md`](006-schedulings-pagination.md)
+- **Status:** Implemented
+- **Scope:**
+  - Backend `PageResponse<T>` DTO adhering to REST conventions.
+  - Spring Data `Pageable` in `SchedulingController` and `SchedulingService`.
+  - Frontend `PageResponse<T>` interface and paginated `schedulingsApi.getAll(page, size)`.
+  - Frontend `useSchedulings` pagination state (`page`, `pageSize`, `totalElements`, `totalPages`).
+  - `Pagination` UI controls in `SchedulingsTable`.
+  - Backend controller tests for paginated responses and frontend Vitest unit/component tests for pagination controls.
+
 
 
 

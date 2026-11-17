@@ -45,3 +45,12 @@ export const mockSchedulings: SchedulingResponse[] = [
     updatedAt: '2026-11-17T14:00:00Z',
   },
 ];
+
+export const mockPageResponse = {
+  content: mockSchedulings,
+  page: 0,
+  size: 10,
+  totalElements: mockSchedulings.length,
+  totalPages: 1,
+  last: true,
+};

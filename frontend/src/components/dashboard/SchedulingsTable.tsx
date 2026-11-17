@@ -3,6 +3,7 @@ import { SchedulingResponse, ScheduleStatus } from '../../types/scheduling';
 import { StatusBadge, TaskBadge, ScheduleTypeBadge } from '../common/Badge';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Button } from '../common/Button';
+import { Pagination } from '../common/Pagination';
 import {
   Play,
   Pause,
@@ -21,6 +22,12 @@ interface SchedulingsTableProps {
   onToggleStatus: (id: string, currentStatus: ScheduleStatus) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCreateNew: () => void;
+  page?: number;
+  pageSize?: number;
+  totalElements?: number;
+  totalPages?: number;
+  onPageChange?: (newPage: number) => void;
+  onPageSizeChange?: (newSize: number) => void;
 }
 
 export const SchedulingsTable: React.FC<SchedulingsTableProps> = ({
@@ -30,6 +37,12 @@ export const SchedulingsTable: React.FC<SchedulingsTableProps> = ({
   onToggleStatus,
   onDelete,
   onCreateNew,
+  page = 0,
+  pageSize = 10,
+  totalElements,
+  totalPages = 1,
+  onPageChange,
+  onPageSizeChange,
 }) => {
   const [deleteCandidate, setDeleteCandidate] = useState<SchedulingResponse | null>(null);
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
@@ -130,7 +143,11 @@ export const SchedulingsTable: React.FC<SchedulingsTableProps> = ({
             </div>
           </div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            Showing <strong>{schedulings.length}</strong> {schedulings.length === 1 ? 'task' : 'tasks'}
+            {totalElements !== undefined ? (
+              <>Total: <strong>{totalElements}</strong> {totalElements === 1 ? 'job' : 'jobs'}</>
+            ) : (
+              <>Showing <strong>{schedulings.length}</strong> {schedulings.length === 1 ? 'task' : 'tasks'}</>
+            )}
           </div>
         </div>
 
@@ -246,6 +263,18 @@ export const SchedulingsTable: React.FC<SchedulingsTableProps> = ({
             </tbody>
           </table>
         </div>
+
+        {onPageChange && onPageSizeChange && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalElements={totalElements ?? schedulings.length}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            disabled={loading}
+          />
+        )}
       </div>
 
       {/* Delete confirmation dialog */}

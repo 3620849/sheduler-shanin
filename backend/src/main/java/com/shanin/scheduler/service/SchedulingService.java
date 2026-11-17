@@ -1,6 +1,7 @@
 package com.shanin.scheduler.service;
 
 import com.shanin.scheduler.dto.CreateSchedulingRequest;
+import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
 import com.shanin.scheduler.dto.UpdateSchedulingRequest;
 import com.shanin.scheduler.entity.ScheduleStatus;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.CronExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +37,12 @@ public class SchedulingService {
     private final SchedulingRepository schedulingRepository;
     private final TaskParameterValidator taskParameterValidator;
     private final QuartzSchedulerService quartzSchedulerService;
+
+    @Transactional(readOnly = true)
+    public PageResponse<SchedulingResponse> getSchedulings(Pageable pageable) {
+        Page<Scheduling> page = schedulingRepository.findAll(pageable);
+        return PageResponse.from(page.map(SchedulingResponse::from));
+    }
 
     @Transactional(readOnly = true)
     public List<SchedulingResponse> getAllSchedulings() {
