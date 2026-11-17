@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shanin.scheduler.dto.CreateSchedulingRequest;
 import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
+import com.shanin.scheduler.dto.SchedulingStatsResponse;
 import com.shanin.scheduler.entity.ScheduleStatus;
 import com.shanin.scheduler.entity.ScheduleType;
 import com.shanin.scheduler.model.TaskType;
@@ -68,6 +69,21 @@ class SchedulingControllerTest {
             .andExpect(jsonPath("$.data.totalElements").value(1))
             .andExpect(jsonPath("$.data.totalPages").value(1))
             .andExpect(jsonPath("$.data.last").value(true));
+    }
+
+    @Test
+    @DisplayName("GET /api/schedulings/stats returns global job status counters")
+    void getStats() throws Exception {
+        SchedulingStatsResponse statsResponse = new SchedulingStatsResponse(20L, 14L, 6L);
+
+        when(schedulingService.getStats()).thenReturn(statsResponse);
+
+        mockMvc.perform(get("/api/schedulings/stats").contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.totalCount").value(20))
+            .andExpect(jsonPath("$.data.activeCount").value(14))
+            .andExpect(jsonPath("$.data.pausedCount").value(6));
     }
 
     @Test

@@ -4,6 +4,7 @@ import {
   SchedulingResponse,
   CreateSchedulingRequest,
   UpdateSchedulingRequest,
+  SchedulingStatsResponse,
 } from '../types/scheduling';
 
 export const schedulingsApi = {
@@ -11,6 +12,11 @@ export const schedulingsApi = {
     const response = await apiClient.get<ApiResponse<PageResponse<SchedulingResponse>>>('/schedulings', {
       params: { page, size, sort: 'createdAt,desc' },
     });
+    return response.data.data;
+  },
+
+  async getStats(): Promise<SchedulingStatsResponse> {
+    const response = await apiClient.get<ApiResponse<SchedulingStatsResponse>>('/schedulings/stats');
     return response.data.data;
   },
 

@@ -2,6 +2,7 @@ package com.shanin.scheduler.service;
 
 import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
+import com.shanin.scheduler.dto.SchedulingStatsResponse;
 import com.shanin.scheduler.entity.ScheduleStatus;
 import com.shanin.scheduler.entity.ScheduleType;
 import com.shanin.scheduler.entity.Scheduling;
@@ -77,5 +78,24 @@ class SchedulingServiceTest {
         assertThat(result.content().getFirst().name()).isEqualTo("Backup Job");
 
         verify(schedulingRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("getStats delegates to repository count methods and returns accurate summary")
+    void getStats() {
+        when(schedulingRepository.count()).thenReturn(15L);
+        when(schedulingRepository.countByStatus(ScheduleStatus.ACTIVE)).thenReturn(10L);
+        when(schedulingRepository.countByStatus(ScheduleStatus.PAUSED)).thenReturn(5L);
+
+        SchedulingStatsResponse result = schedulingService.getStats();
+
+        assertThat(result).isNotNull();
+        assertThat(result.totalCount()).isEqualTo(15L);
+        assertThat(result.activeCount()).isEqualTo(10L);
+        assertThat(result.pausedCount()).isEqualTo(5L);
+
+        verify(schedulingRepository).count();
+        verify(schedulingRepository).countByStatus(ScheduleStatus.ACTIVE);
+        verify(schedulingRepository).countByStatus(ScheduleStatus.PAUSED);
     }
 }

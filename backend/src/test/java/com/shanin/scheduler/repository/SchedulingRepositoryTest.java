@@ -81,5 +81,9 @@ class SchedulingRepositoryTest {
         List<Scheduling> pausedList = repository.findByStatus(ScheduleStatus.PAUSED);
         assertThat(pausedList).hasSize(1);
         assertThat(pausedList.get(0).getName()).isEqualTo("Paused 1");
+
+        assertThat(repository.countByStatus(ScheduleStatus.ACTIVE)).isEqualTo(1L);
+        assertThat(repository.countByStatus(ScheduleStatus.PAUSED)).isEqualTo(1L);
+        assertThat(repository.countByStatus(ScheduleStatus.COMPLETED)).isEqualTo(0L);
     }
 }

@@ -16,6 +16,7 @@ This registry tracks all technical and functional specifications adhering to the
 | **006** | [Schedulings Pagination & Data Navigation](006-schedulings-pagination.md) | `Implemented` | `docs/specs/006-schedulings-pagination.md` | `000`, `001`, `003`, `005` | Stage 6 implementation: Server-side pagination on `GET /api/schedulings` with `PageResponse<T>`, frontend pagination controls, table integration, and full test suite. |
 | **007** | [Quartz Execution History Tracking & Live Log Stream](007-execution-history-tracking.md) | `Implemented` | `docs/specs/007-execution-history-tracking.md` | `000`, `001`, `002`, `003`, `005` | Stage 7 implementation: Persistence of task executions from worker nodes, REST API `/api/executions`, frontend slide-out executions drawer with live polling stream, table row action, and test suite. |
 | **008** | [Playwright E2E Testing Suite with Dockerized Test Environment](008-playwright-e2e-docker-test-environment.md) | `Implemented` | `docs/specs/008-playwright-e2e-docker-test-environment.md` | `000`, `001`, `002`, `003`, `004`, `005`, `006`, `007` | Comprehensive Playwright E2E testing framework running against an isolated containerized test environment (`docker-compose.test.yml`) with a dedicated MySQL test database (`scheduler_test_db`), including multi-schedule suspension isolation tests. |
+| **009** | [Global Job Status Counters](009-global-job-status-counters.md) | `Implemented` | `docs/specs/009-global-job-status-counters.md` | `000`, `001`, `003`, `006` | Global statistics endpoint `GET /api/schedulings/stats` and frontend integration to accurately count active and suspended jobs across all pages. |
 
 ---
 
@@ -134,6 +135,20 @@ This registry tracks all technical and functional specifications adhering to the
   - Frontend `useSchedulings` pagination state (`page`, `pageSize`, `totalElements`, `totalPages`).
   - `Pagination` UI controls in `SchedulingsTable`.
   - Backend controller tests for paginated responses and frontend Vitest unit/component tests for pagination controls.
+
+---
+
+### 009: Global Job Status Counters
+- **Spec File:** [`docs/specs/009-global-job-status-counters.md`](009-global-job-status-counters.md)
+- **Status:** Implemented
+- **Scope:**
+  - Dedicated backend endpoint `GET /api/schedulings/stats` returning `SchedulingStatsResponse(totalCount, activeCount, pausedCount)`.
+  - Spring Data JPA `countByStatus(ScheduleStatus status)` query method on `SchedulingRepository`.
+  - Frontend `SchedulingStatsResponse` interface and `schedulingsApi.getStats()`.
+  - Frontend `useSchedulings` hook fetching global stats concurrently and maintaining synchronized platform counters.
+  - Integration with dashboard stats cards in `App.tsx` ensuring accurate global numbers regardless of pagination.
+  - Backend slice/unit test suite and frontend unit/E2E test suite.
+
 
 
 

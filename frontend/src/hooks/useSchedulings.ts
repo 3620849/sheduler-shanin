@@ -4,6 +4,7 @@ import {
   CreateSchedulingRequest,
   UpdateSchedulingRequest,
   ScheduleStatus,
+  SchedulingStatsResponse,
 } from '../types/scheduling';
 import { schedulingsApi } from '../api/schedulingsApi';
 import { extractErrorMessage } from '../api/client';
@@ -16,15 +17,24 @@ export function useSchedulings() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [totalElements, setTotalElements] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
+  const [stats, setStats] = useState<SchedulingStatsResponse>({
+    totalCount: 0,
+    activeCount: 0,
+    pausedCount: 0,
+  });
 
   const fetchSchedulings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await schedulingsApi.getAll(page, pageSize);
+      const [data, statsData] = await Promise.all([
+        schedulingsApi.getAll(page, pageSize),
+        schedulingsApi.getStats(),
+      ]);
       setSchedulings(data.content);
       setTotalElements(data.totalElements);
       setTotalPages(data.totalPages);
+      setStats(statsData);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -53,6 +63,14 @@ export function useSchedulings() {
   ): Promise<SchedulingResponse> => {
     const updated = await schedulingsApi.update(id, payload);
     setSchedulings((prev) => prev.map((s) => (s.id === id ? updated : s)));
+    if (payload.status !== undefined) {
+      try {
+        const statsData = await schedulingsApi.getStats();
+        setStats(statsData);
+      } catch {
+        // non-blocking stats sync
+      }
+    }
     return updated;
   };
 
@@ -63,6 +81,12 @@ export function useSchedulings() {
     const nextStatus: ScheduleStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
     const updated = await schedulingsApi.update(id, { status: nextStatus });
     setSchedulings((prev) => prev.map((s) => (s.id === id ? updated : s)));
+    try {
+      const statsData = await schedulingsApi.getStats();
+      setStats(statsData);
+    } catch {
+      // non-blocking stats sync
+    }
     return updated;
   };
 
@@ -83,6 +107,7 @@ export function useSchedulings() {
     pageSize,
     totalElements,
     totalPages,
+    stats,
     setPage,
     setPageSize: handleSetPageSize,
     reload: fetchSchedulings,

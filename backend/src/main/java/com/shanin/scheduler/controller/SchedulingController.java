@@ -4,6 +4,7 @@ import com.shanin.scheduler.dto.ApiResponse;
 import com.shanin.scheduler.dto.CreateSchedulingRequest;
 import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
+import com.shanin.scheduler.dto.SchedulingStatsResponse;
 import com.shanin.scheduler.dto.UpdateSchedulingRequest;
 import com.shanin.scheduler.service.SchedulingService;
 import jakarta.validation.Valid;
@@ -38,6 +39,12 @@ public class SchedulingController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PageResponse<SchedulingResponse> page = schedulingService.getSchedulings(pageable);
         return ResponseEntity.ok(ApiResponse.ok(page));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<SchedulingStatsResponse>> getStats() {
+        SchedulingStatsResponse stats = schedulingService.getStats();
+        return ResponseEntity.ok(ApiResponse.ok(stats));
     }
 
     @GetMapping("/{id}")

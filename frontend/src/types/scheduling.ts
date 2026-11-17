@@ -33,3 +33,9 @@ export interface UpdateSchedulingRequest {
   scheduleConfig?: Record<string, any>;
   status?: ScheduleStatus;
 }
+
+export interface SchedulingStatsResponse {
+  totalCount: number;
+  activeCount: number;
+  pausedCount: number;
+}

@@ -14,5 +14,7 @@ public interface SchedulingRepository extends JpaRepository<Scheduling, UUID> {
 
     List<Scheduling> findByStatus(ScheduleStatus status);
 
+    long countByStatus(ScheduleStatus status);
+
     List<Scheduling> findByTaskType(TaskType taskType);
 }

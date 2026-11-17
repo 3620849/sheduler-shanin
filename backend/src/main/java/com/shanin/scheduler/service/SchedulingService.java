@@ -3,6 +3,7 @@ package com.shanin.scheduler.service;
 import com.shanin.scheduler.dto.CreateSchedulingRequest;
 import com.shanin.scheduler.dto.PageResponse;
 import com.shanin.scheduler.dto.SchedulingResponse;
+import com.shanin.scheduler.dto.SchedulingStatsResponse;
 import com.shanin.scheduler.dto.UpdateSchedulingRequest;
 import com.shanin.scheduler.entity.ScheduleStatus;
 import com.shanin.scheduler.entity.ScheduleType;
@@ -42,6 +43,14 @@ public class SchedulingService {
     public PageResponse<SchedulingResponse> getSchedulings(Pageable pageable) {
         Page<Scheduling> page = schedulingRepository.findAll(pageable);
         return PageResponse.from(page.map(SchedulingResponse::from));
+    }
+
+    @Transactional(readOnly = true)
+    public SchedulingStatsResponse getStats() {
+        long totalCount = schedulingRepository.count();
+        long activeCount = schedulingRepository.countByStatus(ScheduleStatus.ACTIVE);
+        long pausedCount = schedulingRepository.countByStatus(ScheduleStatus.PAUSED);
+        return new SchedulingStatsResponse(totalCount, activeCount, pausedCount);
     }
 
     @Transactional(readOnly = true)

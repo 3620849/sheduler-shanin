@@ -63,6 +63,26 @@ describe('schedulingsApi', () => {
     expect(result.content.length).toBe(1);
   });
 
+  it('getStats calls /schedulings/stats and returns stats payload', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          totalCount: 15,
+          activeCount: 10,
+          pausedCount: 5,
+        },
+      },
+    });
+
+    const result = await schedulingsApi.getStats();
+
+    expect(apiClient.get).toHaveBeenCalledWith('/schedulings/stats');
+    expect(result.totalCount).toBe(15);
+    expect(result.activeCount).toBe(10);
+    expect(result.pausedCount).toBe(5);
+  });
+
   it('getById calls correct endpoint', async () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
       data: {

@@ -7,6 +7,7 @@ import { mockSchedulings, mockPageResponse } from '../test/mocks/mockSchedulings
 vi.mock('../api/schedulingsApi', () => ({
   schedulingsApi: {
     getAll: vi.fn(),
+    getStats: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -16,9 +17,14 @@ vi.mock('../api/schedulingsApi', () => ({
 describe('useSchedulings hook with pagination', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(schedulingsApi.getStats).mockResolvedValue({
+      totalCount: 3,
+      activeCount: 2,
+      pausedCount: 1,
+    });
   });
 
-  it('fetches paginated schedulings on mount', async () => {
+  it('fetches paginated schedulings on mount and loads global stats', async () => {
     vi.mocked(schedulingsApi.getAll).mockResolvedValueOnce(mockPageResponse);
 
     const { result } = renderHook(() => useSchedulings());
@@ -32,9 +38,15 @@ describe('useSchedulings hook with pagination', () => {
       expect(result.current.pageSize).toBe(10);
       expect(result.current.totalElements).toBe(3);
       expect(result.current.totalPages).toBe(1);
+      expect(result.current.stats).toEqual({
+        totalCount: 3,
+        activeCount: 2,
+        pausedCount: 1,
+      });
     });
 
     expect(schedulingsApi.getAll).toHaveBeenCalledWith(0, 10);
+    expect(schedulingsApi.getStats).toHaveBeenCalled();
   });
 
   it('changes page and re-fetches', async () => {
@@ -81,6 +93,34 @@ describe('useSchedulings hook with pagination', () => {
       expect(result.current.pageSize).toBe(25);
       expect(result.current.page).toBe(0);
       expect(schedulingsApi.getAll).toHaveBeenCalledWith(0, 25);
+    });
+  });
+
+  it('updates stats when toggleStatus is invoked', async () => {
+    vi.mocked(schedulingsApi.getAll).mockResolvedValue(mockPageResponse);
+    vi.mocked(schedulingsApi.update).mockResolvedValue({
+      ...mockSchedulings[0],
+      status: 'PAUSED',
+    });
+    vi.mocked(schedulingsApi.getStats)
+      .mockResolvedValueOnce({ totalCount: 3, activeCount: 2, pausedCount: 1 })
+      .mockResolvedValueOnce({ totalCount: 3, activeCount: 1, pausedCount: 2 });
+
+    const { result } = renderHook(() => useSchedulings());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.stats.activeCount).toBe(2);
+    });
+
+    await act(async () => {
+      await result.current.toggleStatus(mockSchedulings[0].id, 'ACTIVE');
+    });
+
+    expect(schedulingsApi.update).toHaveBeenCalledWith(mockSchedulings[0].id, { status: 'PAUSED' });
+    await waitFor(() => {
+      expect(result.current.stats.activeCount).toBe(1);
+      expect(result.current.stats.pausedCount).toBe(2);
     });
   });
 });

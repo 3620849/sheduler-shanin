@@ -57,4 +57,25 @@ test.describe('Dashboard Pagination Navigation', () => {
       await expect(currentPageText).toContainText('Page 1 of');
     }
   });
+
+  test('should maintain consistent global active and suspended counts across pages', async ({ page }) => {
+    const sizeSelect = page.locator('#page-size-select');
+    await sizeSelect.selectOption('5');
+    await page.waitForTimeout(500);
+
+    const initialActive = await dashboard.getStatCardValue('Active Jobs');
+    const initialSuspended = await dashboard.getStatCardValue('Suspended Jobs');
+
+    const nextBtn = page.locator('button[aria-label="Next page"]');
+    if (await nextBtn.isEnabled()) {
+      await nextBtn.click();
+      await page.waitForTimeout(500);
+
+      const page2Active = await dashboard.getStatCardValue('Active Jobs');
+      const page2Suspended = await dashboard.getStatCardValue('Suspended Jobs');
+
+      expect(page2Active).toBe(initialActive);
+      expect(page2Suspended).toBe(initialSuspended);
+    }
+  });
 });

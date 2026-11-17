@@ -25,6 +25,7 @@ export function App() {
     pageSize,
     totalElements,
     totalPages,
+    stats,
     setPage,
     setPageSize,
     reload,
@@ -123,9 +124,9 @@ export function App() {
   };
 
   // Stats
-  const totalCount = totalElements;
-  const activeCount = schedulings.filter((s) => s.status === 'ACTIVE').length;
-  const pausedCount = schedulings.filter((s) => s.status === 'PAUSED').length;
+  const totalCount = stats.totalCount;
+  const activeCount = stats.activeCount;
+  const pausedCount = stats.pausedCount;
 
   return (
     <div className="app-layout">
