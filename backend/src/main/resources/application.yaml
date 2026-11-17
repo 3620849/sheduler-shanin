@@ -45,6 +45,7 @@ spring:
     auto-startup: ${SCHEDULER_ENABLED:true}
     jdbc:
       initialize-schema: always
+      schema: classpath:schema-quartz.sql
     properties:
       org.quartz.scheduler.instanceName: TaskClusteredScheduler
       org.quartz.scheduler.instanceId: AUTO

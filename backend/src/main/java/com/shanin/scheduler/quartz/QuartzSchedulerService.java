@@ -35,6 +35,10 @@ public class QuartzSchedulerService {
             JobDetail jobDetail = triggerBuilder.buildJobDetail(scheduling);
             Trigger trigger = triggerBuilder.buildTrigger(scheduling);
 
+            if (scheduler.checkExists(jobDetail.getKey())) {
+                scheduler.deleteJob(jobDetail.getKey());
+            }
+
             Date firstFireDate = scheduler.scheduleJob(jobDetail, trigger);
             log.info("Scheduled job {} with trigger {}, first execution at: {}",
                 jobDetail.getKey(), trigger.getKey(), firstFireDate);
@@ -55,6 +59,9 @@ public class QuartzSchedulerService {
             if (nextFireDate == null) {
                 // If trigger didn't exist before, schedule fresh
                 JobDetail jobDetail = triggerBuilder.buildJobDetail(scheduling);
+                if (scheduler.checkExists(jobDetail.getKey())) {
+                    scheduler.deleteJob(jobDetail.getKey());
+                }
                 nextFireDate = scheduler.scheduleJob(jobDetail, newTrigger);
             }
 

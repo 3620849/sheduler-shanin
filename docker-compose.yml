@@ -102,6 +102,7 @@ services:
       SCHEDULER_ENABLED: "false"
       WORKER_ENABLED: "true"
       SPRING_QUARTZ_AUTO_STARTUP: "false"
+      SPRING_QUARTZ_JDBC_INITIALIZE_SCHEMA: "never"
     depends_on:
       mysql:
         condition: service_healthy

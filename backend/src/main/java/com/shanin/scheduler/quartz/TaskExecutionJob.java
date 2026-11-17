@@ -88,24 +88,40 @@ public class TaskExecutionJob implements Job {
 
         // Update Scheduling entity status and nextRunAt
         if (schedulingId != null) {
-            try {
-                Optional<Scheduling> schedulingOpt = schedulingRepository.findById(schedulingId);
-                if (schedulingOpt.isPresent()) {
-                    Scheduling scheduling = schedulingOpt.get();
-                    Trigger trigger = context.getTrigger();
-                    Date nextFireDate = trigger != null ? trigger.getNextFireTime() : null;
+            updateSchedulingStatus(schedulingId, context);
+        }
+    }
 
-                    if (nextFireDate != null) {
-                        scheduling.setNextRunAt(nextFireDate.toInstant());
-                    } else {
-                        scheduling.setNextRunAt(null);
-                        scheduling.setStatus(ScheduleStatus.COMPLETED);
-                        log.info("Scheduling id={} has no further triggers; marked as COMPLETED", schedulingId);
-                    }
-                    schedulingRepository.save(scheduling);
+    private void updateSchedulingStatus(UUID schedulingId, JobExecutionContext context) {
+        try {
+            Optional<Scheduling> schedulingOpt = schedulingRepository.findById(schedulingId);
+            if (schedulingOpt.isPresent()) {
+                Scheduling scheduling = schedulingOpt.get();
+                Trigger trigger = context.getTrigger();
+                Date nextFireDate = trigger != null ? trigger.getNextFireTime() : null;
+
+                if (nextFireDate != null) {
+                    scheduling.setNextRunAt(nextFireDate.toInstant());
+                } else {
+                    scheduling.setNextRunAt(null);
+                    scheduling.setStatus(ScheduleStatus.COMPLETED);
+                    log.info("Scheduling id={} has no further triggers; marked as COMPLETED", schedulingId);
                 }
-            } catch (Exception e) {
-                log.error("Failed to update scheduling record status for id {}: {}", schedulingIdStr, e.getMessage(), e);
+                schedulingRepository.save(scheduling);
+            }
+        } catch (Exception e) {
+            log.warn("Optimistic lock or concurrency when saving scheduling id={}, falling back to direct update: {}",
+                schedulingId, e.getMessage());
+            try {
+                Trigger trigger = context.getTrigger();
+                Date nextFireDate = trigger != null ? trigger.getNextFireTime() : null;
+                if (nextFireDate != null) {
+                    schedulingRepository.updateNextRunAt(schedulingId, nextFireDate.toInstant());
+                } else {
+                    schedulingRepository.updateStatusAndNextRunAt(schedulingId, ScheduleStatus.COMPLETED, null);
+                }
+            } catch (Exception fallbackEx) {
+                log.error("Failed to update scheduling record status for id {}: {}", schedulingId, fallbackEx.getMessage());
             }
         }
     }
