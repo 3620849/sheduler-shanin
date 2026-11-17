@@ -12,6 +12,8 @@ The platform provides a responsive administrative web UI to create, edit, pause,
   - [1. Flexible Scheduling Capabilities](#1-flexible-scheduling-capabilities)
   - [2. Predefined Read-Only Tasks](#2-predefined-read-only-tasks)
   - [3. Dynamic Parameter Schemas & Validation](#3-dynamic-parameter-schemas--validation)
+  - [4. Schedulings Server-Side Pagination](#4-schedulings-server-side-pagination)
+  - [5. Quartz Execution History & Live Log Stream](#5-quartz-execution-history--live-log-stream)
 - [How to Run the System](#how-to-run-the-system)
   - [Prerequisites](#prerequisites)
   - [Option A: Running with Docker Compose (Recommended)](#option-a-running-with-docker-compose-recommended)
@@ -20,8 +22,8 @@ The platform provides a responsive administrative web UI to create, edit, pause,
 - [Design Decisions](#design-decisions)
 - [Assumptions Made](#assumptions-made)
 - [Automated Testing & Quality Assurance](#automated-testing--quality-assurance)
-  - [Running Backend Tests (29 Tests)](#running-backend-tests-29-tests)
-  - [Running Frontend Tests (38 Tests)](#running-frontend-tests-38-tests)
+  - [Running Backend Tests (37 Tests)](#running-backend-tests-37-tests)
+  - [Running Frontend Tests (64 Tests)](#running-frontend-tests-64-tests)
 
 ---
 
@@ -53,7 +55,7 @@ flowchart TD
         end
 
         subgraph Persistence Tier
-            MySQL[("mysql (:3306)\n- Domain table: schedulings\n- Quartz JDBC JobStore: QRTZ_*")]
+            MySQL[("mysql (:3306)\n- Domain tables: schedulings, task_executions\n- Quartz JDBC JobStore: QRTZ_*")]
         end
     end
 
@@ -63,15 +65,15 @@ flowchart TD
     BackendAPI -->|Quartz Job Trigger| RabbitMQ
     RabbitMQ -->|Consume Execution Event| BackendWorker
     BackendWorker -->|Execute Task Logic| BackendWorker
-    BackendWorker -->|Status / Next Run Updates| MySQL
+    BackendWorker -->|Save Execution Log & Status| MySQL
 ```
 
 ### Component Breakdown
-1. **`frontend` (Port 80):** Multi-stage production build with Node 22 and Nginx Alpine. Serves the React SPA and proxies `/api/*` requests to `http://backend-api:8080/api/` to avoid CORS issues.
-2. **`backend-api` (Port 8080):** Spring Boot service operating in **API / Scheduler mode** (`SCHEDULER_ENABLED=true`, `WORKER_ENABLED=false`). Exposes REST endpoints, validates parameter schemas, and registers jobs with the clustered Quartz Scheduler. When a Quartz trigger fires, it dispatches an execution command to RabbitMQ.
-3. **`backend-worker`:** Spring Boot service operating in **Worker mode** (`SCHEDULER_ENABLED=false`, `WORKER_ENABLED=true`). Listens to RabbitMQ, consumes execution tasks, executes task logic, and updates status/timestamps.
+1. **`frontend` (Port 80):** Multi-stage production build with Node 22 and Nginx Alpine. Serves the React SPA, provides execution log streams and scheduling modals, and proxies `/api/*` requests to `http://backend-api:8080/api/` to avoid CORS issues.
+2. **`backend-api` (Port 8080):** Spring Boot service operating in **API / Scheduler mode** (`SCHEDULER_ENABLED=true`, `WORKER_ENABLED=false`). Exposes REST endpoints (`/api/schedulings`, `/api/tasks`, `/api/executions`), validates parameter schemas, and registers jobs with the clustered Quartz Scheduler. When a Quartz trigger fires, it dispatches an execution command to RabbitMQ.
+3. **`backend-worker`:** Spring Boot service operating in **Worker mode** (`SCHEDULER_ENABLED=false`, `WORKER_ENABLED=true`). Listens to RabbitMQ, consumes execution tasks, executes task logic, records execution history into `task_executions`, and updates scheduling status/timestamps.
 4. **`rabbitmq` (Ports 5672 & 15672):** Asynchronous message broker with a direct exchange (`scheduler.tasks`) and durable queue (`scheduler.tasks.execute`).
-5. **`mysql` (Port 3306):** MySQL 8.4 storing the application domain table (`schedulings`) and the Quartz JDBC JobStore clustering tables (`QRTZ_*`).
+5. **`mysql` (Port 3306):** MySQL 8.4 storing the application domain tables (`schedulings`, `task_executions`) and the Quartz JDBC JobStore clustering tables (`QRTZ_*`).
 
 ---
 
@@ -94,6 +96,17 @@ In accordance with system specifications, task types are **predefined and read-o
 * **Schema Metadata:** Exposed via `GET /api/tasks`, providing parameter names, types (`STRING`, `NUMBER`), formats (`email`), required flags, defaults, and min/max constraints.
 * **Dynamic UI Form:** The React UI dynamically generates form fields according to the selected task schema, rendering input types, email validation, and required asterisks (`*`).
 * **Backend Validation:** Both the UI and backend validator (`TaskParameterValidator`) enforce parameter presence and types, rejecting invalid payloads with standardized RFC 9457 error details (`400 Bad Request`).
+
+### 4. Schedulings Server-Side Pagination
+* **Optimized Data Retrieval:** `GET /api/schedulings?page=0&size=10&sort=createdAt,desc` delivers paginated payloads wrapped in `PageResponse<SchedulingResponse>`, eliminating unbounded array payloads.
+* **Interactive Navigation:** The dashboard features page size selection (5, 10, 25, 50), page navigation controls, item range indicators, and total element counts.
+
+### 5. Quartz Execution History & Live Log Stream
+* **Persistent Execution Logging:** Every trigger fired by Quartz and executed by background workers is persisted in the `task_executions` database table, capturing task name, type, execution duration (ms), trigger fire time, completion status (`SUCCESS` or `FAILED`), and human-readable execution output/logs.
+* **Slide-Out Executions Drawer:**
+  * **Live Auto-Refresh:** Supports real-time polling (3-second interval) with a pulsing visual indicator (`Live` / `Paused`) and manual refresh capability.
+  * **Contextual Views:** Inspect recent triggers across all jobs via the global **"Live Stream →"** / **"Executions"** actions, or inspect executions for a specific schedule via the **"View executions"** row action button.
+  * **Console-Style Output:** Displays execution log streams in formatted monospace code blocks with timestamps, duration, and status badges.
 
 ---
 
@@ -175,10 +188,10 @@ The frontend dev server runs at `http://localhost:3000` and automatically proxie
 | Service | Port | Endpoint URL | Description | Default Credentials |
 | :--- | :--- | :--- | :--- | :--- |
 | **Frontend UI** | `80` (or `3000` dev) | `http://localhost` | React Dashboard & Nginx reverse proxy | None |
-| **Backend API** | `8080` | `http://localhost:8080/api` | Spring Boot REST API | None |
+| **Backend API** | `8080` | `http://localhost:8080/api` | Spring Boot REST API (`/api/schedulings`, `/api/tasks`, `/api/executions`) | None |
 | **RabbitMQ Web** | `15672` | `http://localhost:15672` | RabbitMQ Management Console | `guest` / `guest` |
 | **RabbitMQ AMQP** | `5672` | `amqp://localhost:5672` | AMQP Protocol Broker | `guest` / `guest` |
-| **MySQL Database**| `3306` | `jdbc:mysql://localhost:3306/scheduler_db` | Relational store & Quartz JobStore | `appuser` / `appsecret` |
+| **MySQL Database**| `3306` | `jdbc:mysql://localhost:3306/scheduler_db` | Relational store (`schedulings`, `task_executions`) & Quartz JobStore | `appuser` / `appsecret` |
 
 ---
 
@@ -213,10 +226,10 @@ The frontend dev server runs at `http://localhost:3000` and automatically proxie
 
 The codebase includes comprehensive automated test suites spanning both the backend and frontend.
 
-### Running Backend Tests (29 Tests)
-The backend test suite covers parameter validation, Quartz trigger construction, Spring Data JPA persistence, MVC slice tests, role activation toggles, and message dispatch:
-* **Unit Tests:** `QuartzTriggerBuilderTest`, `TaskParameterValidatorTest`
-* **Slice Tests:** `SchedulingControllerTest`, `TaskControllerTest`, `SchedulingRepositoryTest`
+### Running Backend Tests (37 Tests)
+The backend test suite covers parameter validation, Quartz trigger construction, Spring Data JPA persistence, MVC slice tests, role activation toggles, message dispatch, and task execution tracking:
+* **Unit Tests:** `QuartzTriggerBuilderTest`, `TaskParameterValidatorTest`, `TaskExecutionServiceTest`
+* **Slice Tests:** `SchedulingControllerTest`, `TaskControllerTest`, `ExecutionControllerTest`, `SchedulingRepositoryTest`, `TaskExecutionRepositoryTest`
 * **Integration Tests:** `RoleActivationIntegrationTest`, `TaskDispatchAndExecutionTest`
 
 To run backend tests locally (requires JDK 25):
@@ -225,10 +238,10 @@ cd backend
 ./mvnw clean test
 ```
 
-### Running Frontend Tests (38 Tests)
-The frontend test suite is powered by **Vitest** and **React Testing Library**, covering API error extraction, badge styling, table interactions (delete confirmation dialogs, status toggles), dynamic schema form rendering, timing selectors, and scheduling modals:
-* **Unit & Hook Tests:** `client.test.ts`, `useTasks.test.ts`
-* **Component Tests:** `Badge.test.tsx`, `SchedulingsTable.test.tsx`, `DynamicParameterForm.test.tsx`, `ScheduleTimingSelector.test.tsx`, `SchedulingModal.test.tsx`
+### Running Frontend Tests (64 Tests)
+The frontend test suite is powered by **Vitest** and **React Testing Library**, covering API error extraction, pagination, badge styling, table interactions (delete confirmation dialogs, status toggles, execution drawer open), live execution stream auto-polling, dynamic schema form rendering, timing selectors, and scheduling modals:
+* **Unit & Hook Tests:** `client.test.ts`, `schedulingsApi.test.ts`, `useTasks.test.ts`, `useSchedulings.test.ts`
+* **Component Tests:** `Badge.test.tsx`, `Pagination.test.tsx`, `SchedulingsTable.test.tsx`, `ExecutionsDrawer.test.tsx`, `DynamicParameterForm.test.tsx`, `ScheduleTimingSelector.test.tsx`, `SchedulingModal.test.tsx`
 
 To run frontend tests:
 ```bash
